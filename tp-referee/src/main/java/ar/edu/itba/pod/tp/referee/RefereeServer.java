@@ -4,13 +4,6 @@
  */
 package ar.edu.itba.pod.tp.referee;
 
-import ar.edu.itba.pod.tp.interfaces.Player;
-import ar.edu.itba.pod.tp.interfaces.PlayerLoserException;
-import ar.edu.itba.pod.tp.interfaces.Referee;
-import ar.edu.itba.pod.tp.interfaces.Registration;
-import ar.edu.itba.pod.tp.interfaces.Request;
-import ar.edu.itba.pod.tp.interfaces.Response;
-import ar.edu.itba.pod.tp.interfaces.Utils;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+
+import ar.edu.itba.pod.tp.interfaces.Player;
+import ar.edu.itba.pod.tp.interfaces.PlayerLoserException;
+import ar.edu.itba.pod.tp.interfaces.Referee;
+import ar.edu.itba.pod.tp.interfaces.Registration;
+import ar.edu.itba.pod.tp.interfaces.Request;
+import ar.edu.itba.pod.tp.interfaces.Response;
+import ar.edu.itba.pod.tp.interfaces.Utils;
 
 /**
  *
@@ -28,14 +29,14 @@ public class RefereeServer implements Referee
 	public static final String ENDPOINT = "endpoint:";
 
 	final List<Player> playerServers = new ArrayList<Player>();
-	final Map<Player, Registration> registrations = new HashMap();
-	final Map<Player, Registration> initialRegistrations = new HashMap();
+	final Map<Player, Registration> registrations = new HashMap<Player, Registration>();
+	final Map<Player, Registration> initialRegistrations = new HashMap<Player, Registration>();
 	final List<Registration> winners = new ArrayList<Registration>();
 	final Random random = new Random();
-	final Map<Integer, List<Request>> requests = new HashMap();
+	final Map<Integer, List<Request>> requests = new HashMap<Integer, List<Request>>();
 	boolean playing;
 	final int clientTotal;
-	final Map<String, List<Player>> players = new HashMap();
+	final Map<String, List<Player>> players = new HashMap<String, List<Player>>();
 
 	public RefereeServer(int clientTotal)
 	{
@@ -58,26 +59,26 @@ public class RefereeServer implements Referee
 	@Override
 	public synchronized void registerRequest(Player player, Request request) throws RemoteException
 	{
-		Registration clientReg = findRegistration(player);
-		System.out.println("REQ: " + clientReg.name + " - " + request);
-		if (clientReg.id != request.playerId) {
+		Registration clientRegistration = findRegistration(player);
+		System.out.println("REQ: " + clientRegistration.name + " - " + request);
+		if (clientRegistration.id != request.playerId) {
 			throw kickOutPlayer(player, "Fallo el PLAYER SEQ!!!");
 		}
-		if (clientReg.clientSeq != request.clientSeq) {
-			throw kickOutPlayer(player, "Fallo el PLAYER OP SEQ!!! " + clientReg.clientSeq + "/" + request.clientSeq);
+		if (clientRegistration.clientSeq != request.clientSeq) {
+			throw kickOutPlayer(player, "Fallo el PLAYER OP SEQ!!! " + clientRegistration.clientSeq + "/" + request.clientSeq);
 		}
-		String check = hashMessage(clientReg, request.clientSeq, request.message);
+		String check = hashMessage(clientRegistration, request.clientSeq, request.message);
 		if (!check.equals(request.hash)) {
 			throw kickOutPlayer(player, "Fallo el hash!!!");
 		}
-		clientReg.clientSeq++;
-		clientReg.clientCount++;
+		clientRegistration.clientSeq++;
+		clientRegistration.clientCount++;
 		
-		List<Request> playerRequests = requests.get(clientReg.id);
+		List<Request> playerRequests = requests.get(clientRegistration.id);
 		playerRequests.add(request);
 
-		if (clientReg.serverCount >= clientTotal) {
-			winners.add(clientReg);
+		if (clientRegistration.serverCount >= clientTotal) {
+			winners.add(clientRegistration);
 		}
 	}
 
@@ -141,7 +142,7 @@ public class RefereeServer implements Referee
 			playerServers.add(playerClient);
 			registrations.put(playerClient, result);
 			initialRegistrations.put(playerClient, result);
-			requests.put(result.id, new ArrayList());
+			requests.put(result.id, new ArrayList<Request>());
 		}
 
 		synchronized (this) {

@@ -1,13 +1,11 @@
 package ar.edu.itba.pod.tp.player;
 
-import ar.edu.itba.pod.tp.interfaces.Player;
-import ar.edu.itba.pod.tp.interfaces.PlayerDownException;
-import ar.edu.itba.pod.tp.interfaces.Referee;
 import java.rmi.ConnectException;
-import java.rmi.UnmarshalException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.List;
+import java.util.Scanner;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -16,6 +14,10 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+
+import ar.edu.itba.pod.tp.interfaces.Player;
+import ar.edu.itba.pod.tp.interfaces.PlayerDownException;
+import ar.edu.itba.pod.tp.interfaces.Referee;
 
 /**
  * Hello world!
@@ -55,17 +57,22 @@ public class PlayerApp
 				try {
 					Player other = players.get(opt);
 					if (other != null) {
-						server.play("hola! estamos jugando " + plays, other);
+						server.play("Jugada número " + plays + " de " + name + " desde " + host, other);
 					}
 				}
 				catch (PlayerDownException e) {
+					System.out.println("Se fue un wacho");
 					players.remove(opt);
 				}
 			} while (++plays < loop);
 			
 				
 			System.out.println("salio!");
+			server.wait(10000);
 			System.exit(0);
+		}
+		catch (ConnectException e){
+			System.err.println("Connection refused by server, sure server is up?");
 		}
 		catch (Exception e) {
 			e.printStackTrace();
