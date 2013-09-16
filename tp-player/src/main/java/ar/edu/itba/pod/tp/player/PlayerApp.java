@@ -4,7 +4,9 @@ import java.rmi.ConnectException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.List;
-import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -32,6 +34,8 @@ public class PlayerApp
 		final String host = cmdLine.getOptionValue(HOST_L, HOST_D);
 		final String name = cmdLine.getOptionValue(NAME_L);
 
+		ExecutorService executorService = Executors.newFixedThreadPool(THREAD_N);
+		
 		if (cmdLine.hasOption("help")) {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("player", options);
@@ -52,23 +56,18 @@ public class PlayerApp
 			int plays = 0;
 			int loop = server.total;
 			System.out.println("EMPEZAMOS!! el total de requests es: " + loop);
-			do {
-				int opt = (int) (java.lang.Math.random() * players.size());
-				try {
-					Player other = players.get(opt);
-					if (other != null) {
-						server.play("Jugada número " + plays + " de " + name + " desde " + host, other);
-					}
-				}
-				catch (PlayerDownException e) {
-					System.out.println("Se fue un wacho");
-					players.remove(opt);
-				}
-			} while (++plays < loop);
-			
+			int thread=0;
+			while(thread++<THREAD_N){
+//				System.out.println("THREAD #"+ Thread.currentThread().getId() + " inicializado. Jugará "  + (loop / THREAD_N) + " veces");
+				synchronized(players) {	       
+					executorService.execute(new PlayerWorker(players, server));
+			    }
+			}
+//			executorService.shutdown();
+			executorService.awaitTermination(10, TimeUnit.SECONDS);
 				
 			System.out.println("salio!");
-			server.wait(10000);
+			
 			System.exit(0);
 		}
 		catch (ConnectException e){
@@ -116,4 +115,5 @@ public class PlayerApp
 	private static final String NAME_L = "name";
 	private static final String NAME_S = "n";
 	private static Options options = createOptions();
+	static final int THREAD_N = 3;
 }
